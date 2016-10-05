@@ -26,12 +26,11 @@ int numOfThreads;
 FILE *fpr;
 FILE *fpw;
 FILE *fpe;//error writing file pointer.
-
 while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != 1){
 	switch(errcheck){
 		case 'a':
 			optind--;//external int used by getopt
-			for(; optind < argc && *argv[optind] != '-'; optind++){
+			for(; optind < argc - 1 && *argv[optind] != '-'; optind++){
 				algorithms[optind] = argv[optind];
 			}
 			break;
@@ -74,6 +73,7 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != 1){
     for(i = 0; i < 5; i++){
     	*algorithms[i] = tolower(algorithms[i]);
     }
+    //printf("We getting to here?");
     for(i = 0; i < 5; i++){
     	if((md5flag = strcmp(algorithms[i], "md5")) == 0){
     		MD5_CTX md5;
@@ -89,7 +89,7 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != 1){
     			}
     		}
     		else{
-    			while(errcheck = getopt(argc, argv, "t::") == 1){
+    			while(errcheck = getopt(argc, argv, "t::") != 1){
     			MD5_Update(&md5, argv[argc -1], sizeof(argv[argc -1]));
     			MD5_Final(argv[argc], &md5);
     			for(j = 0; j < sizeof(argv[argc -1]); j++) 
