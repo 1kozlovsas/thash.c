@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -63,10 +62,10 @@ void *threadFunction(void *arg)
     if (front1 == NULL)
     {
     	if(errFileName != NULL){
-	   		fprintf(fpe, "\n Error: Trying to display elements from empty queue");
-	   		printf("Something has failed, way to go, JERRY. See error file %s for more details.", errFileName);
+	   		fprintf(fpe, "\n Error: Trying to display elements from empty queue\n");
+	   		printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
 	   		}
-        printf("\n Error: You're trying to display elements from an empty queue. That would be Rick-Diculous!");
+        printf("Error: You're trying to display elements from an empty queue. That would be Rick-Diculous!\n");
         return arg;
     }
     else
@@ -182,36 +181,49 @@ int main(int argc, char *argv[]) {
 printf("Hi, I'm Mr Meseeks, look at me! I heard you want to hash some files. CAAAN DO! \n");
 
 
-
-while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
-	printf("Value of errcheck is %d", errcheck);
+opterr = 0;
+while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
+	opterr = 0;
+	printf("Value of errcheck is %c\n", errcheck);
 	switch(errcheck){
 		case 'a':
-			//optind--;//external int used by getopt
+			optind--;//external int used by getopt
 			//for(; optind < argc - 1 && *argv[optind] != '-'; optind++){
 			algorithms[0] = strtok(argv[optind], ",");
-			for(int i = 1; i<=3 && (algorithms[i] = strtok(NULL, ","))!=NULL; i++); //This tokenizes the algorithms
+			printf("Algorithm read: %s\n", algorithms[0]);
+			for(int i = 1; i<=3 && (algorithms[i] = strtok(NULL, ","))!=NULL; i++){
+				printf("Algorithm read: %s\n", algorithms[i]);
+			} //This tokenizes the algorithms
+			optind++;
 			//algorithms[optind] = argv[optind];
 			//}
 			break;
 		case 'f':
+			/*if(optarg == NULL){
+			printf("you little shit");
+			exit(EXIT_FAILURE);
+			}*/
 			fileReadName = optarg;
 			if ( ( fpr = fopen(fileReadName, "r" ) ) == NULL ) {
-      			printf( "File %s could not be opened", fileReadName);
+      			printf( "File %s could not be opened\n", optarg);
       			exit(EXIT_FAILURE);
       		}
       		break;
       	case 'e':
+		/*if(optarg == NULL){
+		printf("why you little shit\n");
+		exit(EXIT_FAILURE);
+		}*/
       		errFileName = optarg;
       		if ( ( fpe = fopen(errFileName, "w" ) ) == NULL ) {
-      			printf( "File %s could not be opened", errFileName);
+      			printf( "File %s could not be opened\n", optarg);
       			exit(EXIT_FAILURE);
       		}
       		break;
       	case 'o':
       		fileWriteName = optarg;
       		if ( ( fpw = fopen(fileWriteName, "w" ) ) == NULL ) {
-      			printf( "File %s could not be opened", fileWriteName);
+      			printf( "File %s could not be opened\n", fileWriteName);
       			exit(EXIT_FAILURE);
       		}
       		break;
@@ -225,7 +237,7 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
         	printf("Morty, you're not using it right. You can't put -%c into this program. \n ", optopt);
         	break;
         default:
-        	printf("You really squanched it up. The usage for this program is: thash -a algorithms file1...file2...");
+        	printf("You really squanched it up. The usage for this program is: thash -a algorithms file1...file2...\n");
         	exit(EXIT_FAILURE);
 
         }//end switch
@@ -237,11 +249,11 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
 
 	   			if((fprFromFile = fopen(fgets(buffer, 1024, fpr), "r")) == NULL){
 	   				if(errFileName != NULL){
-	   					fprintf(fpe, "Error reading file names from file specified");
-	   					printf("Something has failed, way to go, JERRY. See error file %s for more details.", errFileName);
+	   					fprintf(fpe, "Error reading file names from file specified\n");
+	   					printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
 	   				}
 	   				else{
-	   					printf("Error reading file names from file specified.");
+	   					printf("Error reading file names from file specified.\n");
 	   					exit(EXIT_FAILURE);
 	   				}
 
@@ -265,7 +277,8 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
 			}//end else statement
 			}//end while
 			}//end if fileReadName != NULL check.
-
+	for(int i = optind; i < argc; i++) 
+		printf("File Detected: %s\n", argv[i]);
 
 		argc--;//decrement argc by 1 since number of args starts at 0.
 /*		int counter = argc;//assiging argc to a placeholder counter for readability  //This line is disabling a lot of code to isolate the segfault
@@ -312,7 +325,7 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
 //    	*algorithms[i] = tolower(algorithms[i]);
 //    }                                                           //Ian: This won't work, tolower works on chars, not strings
 
-/*    for(i = 0; i < 4; i++){                                    
+    for(i = 0; i < 4; i++){                                    
     	if((md5flag = strcmp(algorithms[i], "md5")) == 0){
 			MD5_Init(&md5);
     		}
