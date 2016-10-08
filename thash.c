@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <pthread.h>
@@ -16,7 +17,8 @@ int j;//used for nested for loop
 /**flags to indicate which algorithms user has specified **/
 int md5flag = 0;
 int sha1flag = 0;
-int sha256flag = 0;
+int 
+sha256flag = 0;
 int sha512flag = 0;
 /**Creating contexts and arrays to store hashes **/
 MD5_CTX md5;
@@ -29,7 +31,7 @@ unsigned char sha256hash[SHA256_DIGEST_LENGTH];
 unsigned char sha512hash[SHA512_DIGEST_LENGTH];
 int errcheck;//variable used for error checking
 char *tokenPtr;//token pointer to temporarily hold tokenized hash specifications, to be placed into algorithms array
-char *algorithms[4];//array of strings entered after -m flag.
+char *algorithms[4];//array of strings entered after -m flag. //Ian: Should this not be the -a flag?
 char *fileReadName = NULL;//Pointer to file to read from, specified by user with -f flag.
 char *errFileName = NULL;//Pointer to file to write errors to, specified by user with -e flag.
 char *fileWriteName = NULL;//Pointer to file to write stdout to, specified by user with -o flag.
@@ -65,7 +67,7 @@ void *threadFunction(void *arg)
 	   		printf("Something has failed, way to go, JERRY. See error file %s for more details.", errFileName);
 	   		}
         printf("\n Error: You're trying to display elements from an empty queue. That would be Rick-Diculous!");
-        return;
+        return arg;
     }
     else
         if (front1->ptr != NULL)
@@ -171,7 +173,7 @@ void *threadFunction(void *arg)
             front = NULL;
             rear = NULL;
         }
-
+	return arg;
 }
 //End thread
 
@@ -184,12 +186,13 @@ printf("Hi, I'm Mr Meseeks, look at me! I heard you want to hash some files. CAA
 while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
 	printf("Value of errcheck is %d", errcheck);
 	switch(errcheck){
-		
 		case 'a':
-			optind--;//external int used by getopt
-			for(; optind < argc - 1 && *argv[optind] != '-'; optind++){
-				algorithms[optind] = argv[optind];
-			}
+			//optind--;//external int used by getopt
+			//for(; optind < argc - 1 && *argv[optind] != '-'; optind++){
+			algorithms[0] = strtok(argv[optind], ",");
+			for(int i = 1; i<=3 && (algorithms[i] = strtok(NULL, ","))!=NULL; i++); //This tokenizes the algorithms
+			//algorithms[optind] = argv[optind];
+			//}
 			break;
 		case 'f':
 			fileReadName = optarg;
@@ -216,11 +219,11 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
       		numOfThreads = strtol(optarg, NULL, 10);
       		break;
       	case ':':                           
-            printf("Option -%c requires a plumb-I mean, argument.\n", optopt);//optopt is an external int.
-            break;
+        	printf("Option -%c requires a plumb-I mean, argument.\n", optopt);//optopt is an external int.
+ 		break;
         case '?':                           
-            printf("Morty, you're not using it right. You can't put -%c into this program. \n ", optopt);
-            break;
+        	printf("Morty, you're not using it right. You can't put -%c into this program. \n ", optopt);
+        	break;
         default:
         	printf("You really squanched it up. The usage for this program is: thash -a algorithms file1...file2...");
         	exit(EXIT_FAILURE);
@@ -237,12 +240,12 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
 	   					fprintf(fpe, "Error reading file names from file specified");
 	   					printf("Something has failed, way to go, JERRY. See error file %s for more details.", errFileName);
 	   				}
-	   			else{
-	   				printf("Error reading file names from file specified.");
-	   				exit(EXIT_FAILURE);
-	   			}
+	   				else{
+	   					printf("Error reading file names from file specified.");
+	   					exit(EXIT_FAILURE);
+	   				}
 
-	   	}
+	   			}
 	   	else{
 	   		//populating queue with values read from file specified with -f flag as well as comamnd line args.
 	   		 if (rear == NULL) {
@@ -262,8 +265,10 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
 			}//end else statement
 			}//end while
 			}//end if fileReadName != NULL check.
+
+
 		argc--;//decrement argc by 1 since number of args starts at 0.
-		int counter = argc;//assiging argc to a placeholder counter for readability
+/*		int counter = argc;//assiging argc to a placeholder counter for readability  //This line is disabling a lot of code to isolate the segfault
 		//This while loop is used to locate the last valid file names to populate queue with.
 		while(strcmp(argv[counter], "-f") != 1 || strcmp(argv[counter], "-a") != 1 || strcmp(argv[counter], "-o") != 1 || strcmp(argv[counter], "-e") != 1 || strcmp(argv[counter], "-t") != 1){
 			counter--;
@@ -302,11 +307,12 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
 		printf("Algos entered: %s", algorithms[i]);
 		i++;
 		}
-    for(i = 0; i < 4; i++){//converts array of algorithms you made above to lowercase.
+//    for(i = 0; i < 4; i++){//converts array of algorithms you made above to lowercase.
    
-    	*algorithms[i] = tolower(algorithms[i]);
-    }
-    for(i = 0; i < 4; i++){
+//    	*algorithms[i] = tolower(algorithms[i]);
+//    }                                                           //Ian: This won't work, tolower works on chars, not strings
+
+/*    for(i = 0; i < 4; i++){                                    
     	if((md5flag = strcmp(algorithms[i], "md5")) == 0){
 			MD5_Init(&md5);
     		}
@@ -322,11 +328,11 @@ while((errcheck = getopt(argc, argv, "a:f::e::o::t::")) != -1) {
     	}
     	
 		}//end for loop.
-
+*/
     
     //TODO: Finish implementing threading. You have written the function for the thread, you've created the thread below. Now finish it.
     for(j = 0; j <= numOfThreads; j++){
-    pthread_create(&identifier, NULL, threadFunction, "I'm Mr Threadseeks, look at me!");
+    pthread_create(&identifier, NULL, &threadFunction, "I'm Mr Threadseeks, look at me!");
 	}
 	pthread_join(identifier, NULL);
     
