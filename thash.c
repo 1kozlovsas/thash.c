@@ -14,11 +14,10 @@ void *threadFunction(void *arg);//function declaration
 int i;//used to keep track of arguments.
 int j;//used for nested for loop
 /**flags to indicate which algorithms user has specified **/
-int md5flag = 0;
-int sha1flag = 0;
-int 
-sha256flag = 0;
-int sha512flag = 0;
+int md5flag = 1;
+int sha1flag = 1;
+int sha256flag = 1;
+int sha512flag = 1;
 /**Creating contexts and arrays to store hashes **/
 MD5_CTX md5;
 SHA_CTX sha;
@@ -53,6 +52,60 @@ typedef struct node node;//defining node to point to struct node so I don't have
 
 //front = rear = NULL;//empty queue created
 
+char * stringToLower(char *str, int n){ //Makes the first n chars of a string lowercase
+    if(str == NULL)
+        return NULL;
+    const char *out = str;
+    while(*str != '\0'&& n > 0){
+        *str = tolower(*str);
+        str++;
+        n--;
+    }
+    return (char *)out;
+}
+
+void printHashes(FILE *fp){
+    fprintf(fp, "%s\n" , front->info);
+    if(md5flag == 0){
+    MD5_Update(&md5, front->info, sizeof(node));    
+    MD5_Final(md5hash, &md5);
+        fprintf(fp, "MD5\n");
+        for(j = 0; j < MD5_DIGEST_LENGTH; j++){
+            fprintf(fp, "%02x", md5hash[j]);
+            }
+            fprintf(fp, "\n"); 
+    }      
+    if(sha1flag == 0)
+    {
+    SHA1_Update(&sha, front->info, sizeof(node));   
+    SHA1_Final(sha1hash, &sha);
+        fprintf(fp, "SHA1\n");
+        for(j = 0; j < SHA_DIGEST_LENGTH; j++){
+                fprintf(fp, "%02x", sha1hash[j]);
+        }
+        fprintf(fp, "\n");
+    }
+    if(sha256flag == 0)
+    {
+    SHA256_Update(&sha256, front->info, sizeof(node));  
+    SHA256_Final(sha256hash, &sha256);
+        fprintf(fp, "SHA256\n");
+        for(j = 0; j < SHA256_DIGEST_LENGTH; j++){
+            fprintf(fp, "%02x", sha256hash[j]);
+        }
+        fprintf(fp, "\n");
+    }
+    if(sha512flag == 0)
+    {
+    SHA512_Update(&sha512, front->info, sizeof(node));  
+    SHA512_Final(sha512hash, &sha512);
+        fprintf(fp, "SHA512\n");
+        for(j = 0; j < SHA512_DIGEST_LENGTH; j++){
+                fprintf(fp, "%02x", sha512hash[j]);
+        }
+        fprintf(fp, "\n");
+    }
+}
 
 void *threadFunction(void *arg)
 {
@@ -64,114 +117,38 @@ void *threadFunction(void *arg)
     	if(errFileName != NULL){
 	   		fprintf(fpe, "\n Error: Trying to display elements from empty queue\n");
 	   		printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
-	   		}
+	   	}
         printf("Error: You're trying to display elements from an empty queue. That would be Rick-Diculous!\n");
         return arg;
     }
-    else
+    else{
         if (front1->ptr != NULL)
         {
             front1 = front1->ptr;
-            if(&md5 != NULL){
-            MD5_Update(&md5, front->info, sizeof(node));	
-    		MD5_Final(md5hash, &md5);
-    			for(j = 0; j < sizeof(node); j++){
-    				if(fileWriteName != NULL){
-    					fprintf(fpw, "%s \n" , front->info);
-    					fprintf(fpw, "%02x", md5hash[j]);
-    				}
-    				else{
-    				printf (" %s\n", front->info);
-    				printf("%02x", md5hash[j]);
-    					}//end else
-    				}//end for 
-    		}//end if		
-    		else if(&sha != NULL)
-    		{
-            SHA1_Update(&sha, front->info, sizeof(node));	
-    		SHA1_Final(sha1hash, &sha);
-    			for(j = 0; j < sizeof(node); j++){
-    				if(fileWriteName != NULL){
-    					fprintf(fpw, "%s \n" , front->info);
-    					fprintf(fpw, "%02x", sha1hash[j]);
-    				}
-    				else{
-    				printf (" %s\n", front->info);
-    				printf("%02x", sha1hash[j]);
-    				}
-    			}
-    		}
-    		else if(&sha256 != NULL)
-    		{
-            SHA256_Update(&sha256, front->info, sizeof(node));	
-    		SHA256_Final(sha256hash, &sha256);
-    			for(j = 0; j < sizeof(node); j++){
-    				if(fileWriteName != NULL){
-    					fprintf(fpw, "%s \n" , front->info);
-    					fprintf(fpw, "%02x", sha256hash[j]);
-    				}
-    				else{
-    				printf (" %s\n", front->info);
-    				printf("%02x", sha256hash[j]);
-    			}}
-    		}
-    		else if(&sha512 != NULL)
-    		{
-            SHA512_Update(&sha512, front->info, sizeof(node));	
-    		SHA512_Final(sha512hash, &sha512);
-    			for(j = 0; j < sizeof(node); j++){
-    				if(fileWriteName != NULL){
-    					fprintf(fpw, "%s \n" , front->info);
-    					fprintf(fpw, "%02x", sha512hash[j]);
-    				}
-    				else{
-    				printf (" %s\n", front->info);
-    				printf("%02x", sha256hash[j]);
-    			}}
-           }
-           //printf("\n Dequed value : %s", front->info);
+            if(fileWriteName != NULL){
+                printHashes(fpw);
+            }
+            else{
+                printHashes(stdout);
+            }
+            printf("Dequeued value: %s\n", front->info);
             free(front);
             front = front1;
         }
         else
         {
-        	if(&md5 != NULL){
-            MD5_Update(&md5, front->info, sizeof(node));	
-    		MD5_Final(md5hash, &md5);
-    			for(j = 0; j < sizeof(node); j++){
-    				printf (" %s\n", front->info);
-    				printf("%02x", md5hash[j]);
-    			}
-    		}
-    		else if(&sha != NULL){
-            SHA1_Update(&sha, front->info, sizeof(node));	
-    		SHA1_Final(sha1hash, &sha);
-    			for(j = 0; j < sizeof(node); j++){
-    				printf (" %s\n", front->info);
-    				printf("%02x", sha1hash[j]);
-    			}
-    		}
-    		else if(&sha256 != NULL){
-            SHA256_Update(&sha256, front->info, sizeof(node));	
-    		SHA256_Final(sha256hash, &sha256);
-    			for(j = 0; j < sizeof(node); j++){
-    				printf (" %s\n", front->info);
-    				printf("%02x", sha256hash[j]);
-    			}
-    		}
-    		else if(&sha512 != NULL){
-            SHA512_Update(&sha512, front->info, sizeof(node));	
-    		SHA512_Final(sha512hash, &sha512);
-    			for(j = 0; j < sizeof(node); j++){
-    				printf (" %s\n", front->info);
-    				printf("%02x", sha256hash[j]);
-    			}
-    		}
-            printf("\n Dequed value : %s", front->info);
-            free(front);
-            front = NULL;
-            rear = NULL;
+            if(fileWriteName != NULL){
+                printHashes(fpw);
+            }
+            else{
+                printHashes(stdout);
+            }
+        printf("Dequeued value: %s\n", front->info);
+        free(front);
+        front = NULL;
+        rear = NULL;
         }
+    }
 	return arg;
 }
 //End thread
@@ -188,21 +165,16 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 	switch(errcheck){
 		case 'a':
 			optind--;//external int used by getopt
-			//for(; optind < argc - 1 && *argv[optind] != '-'; optind++){
-			algorithms[0] = strtok(argv[optind], ",");
+			algorithms[0] = stringToLower(strtok(argv[optind], ","), 6);
 			printf("Algorithm read: %s\n", algorithms[0]);
-			for(int i = 1; i<=3 && (algorithms[i] = strtok(NULL, ","))!=NULL; i++){
+			for(int i = 1; i<=3 && (algorithms[i] = stringToLower(strtok(NULL, ","), 6))!=NULL; i++){
 				printf("Algorithm read: %s\n", algorithms[i]);
 			} //This tokenizes the algorithms
 			optind++;
-			//algorithms[optind] = argv[optind];
-			//}
+
 			break;
 		case 'f':
-			/*if(optarg == NULL){
-			printf("you little shit");
-			exit(EXIT_FAILURE);
-			}*/
+
 			fileReadName = optarg;
 			if ( ( fpr = fopen(fileReadName, "r" ) ) == NULL ) {
       			printf( "File %s could not be opened\n", optarg);
@@ -210,10 +182,7 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
       		}
       		break;
       	case 'e':
-		/*if(optarg == NULL){
-		printf("why you little shit\n");
-		exit(EXIT_FAILURE);
-		}*/
+
       		errFileName = optarg;
       		if ( ( fpe = fopen(errFileName, "w" ) ) == NULL ) {
       			printf( "File %s could not be opened\n", optarg);
@@ -244,113 +213,101 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
     	}//end while loop
 
 		//obtaining a list of file names.
-        if(fileReadName != NULL){
-    		while(!feof(fpr)){
-
-	   			if((fprFromFile = fopen(fgets(buffer, 1024, fpr), "r")) == NULL){
+        if(fileReadName != NULL){		//If the file of filenames exists
+    		while(fgets(buffer, 1024, fpr)!=NULL){		//Continue reading filenames until EOF
+                buffer[strlen(buffer)-1] = '\0';          //Delimit the file name
+	   			if((fprFromFile = fopen(buffer, "r")) == NULL){
 	   				if(errFileName != NULL){
-	   					fprintf(fpe, "Error reading file names from file specified\n");
+	   					fprintf(fpe, "Error reading file %s from file list.\n", buffer);
 	   					printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
 	   				}
 	   				else{
-	   					printf("Error reading file names from file specified.\n");
-	   					exit(EXIT_FAILURE);
+	   					printf("Error reading file %s from file list.\n", buffer);
+                        printf("String length is: %lu\n", strlen(buffer));
 	   				}
 
 	   			}
-	   	else{
-	   		//populating queue with values read from file specified with -f flag as well as comamnd line args.
-	   		 if (rear == NULL) {
-        		rear = (struct node *)malloc(1*sizeof(struct node));
-        		rear->ptr = NULL;
-        		rear->info = fileNamefromFileFlag;
-        		front = rear;
-    			}
-    		 else {
-        		temp=(struct node *)malloc(1*sizeof(struct node));
-        		rear->ptr = temp;
-        		temp->info = fileNamefromFileFlag;
-        		temp->ptr = NULL;
-        		rear = temp;
-	   			}
+	   			else{
+	   			//populating queue with values read from file specified with -f flag as well as comamnd line args.
+	   		 		if (rear == NULL) {
+        				rear = (struct node *)malloc(sizeof(struct node));
+        				rear->ptr = NULL;
+                        rear->info = (char *)malloc(strlen(buffer));
+        				strncpy(rear->info, buffer, strlen(buffer));
+        				front = rear;
+    					}
+    		 			else {
+        				temp = (struct node *)malloc(sizeof(struct node));
+        				rear->ptr = temp;
+                        temp->info = (char *)malloc(strlen(buffer));
+        				strncpy(temp->info, buffer, strlen(buffer));
+        				temp->ptr = NULL;
+        				rear = temp;
+	   				}
 	   			queueCounter++;
-			}//end else statement
-			}//end while
-			}//end if fileReadName != NULL check.
-	for(int i = optind; i < argc; i++) 
-		printf("File Detected: %s\n", argv[i]);
-
-		argc--;//decrement argc by 1 since number of args starts at 0.
-/*		int counter = argc;//assiging argc to a placeholder counter for readability  //This line is disabling a lot of code to isolate the segfault
-		//This while loop is used to locate the last valid file names to populate queue with.
-		while(strcmp(argv[counter], "-f") != 1 || strcmp(argv[counter], "-a") != 1 || strcmp(argv[counter], "-o") != 1 || strcmp(argv[counter], "-e") != 1 || strcmp(argv[counter], "-t") != 1){
-			counter--;
+				}//end else statement
 		}//end while
-		counter++;//incrementing counter by 1 to account for bogus argument.
-		while(counter <= argc){
-			//queue populating with file names taken from command line.
-			if (rear == NULL) {
-        		rear = (struct node *)malloc(1*sizeof(struct node));
-        		rear->ptr = NULL;
-        		rear->info = argv[counter];
-        		front = rear;
-    			}
-    		 else {
-        		temp=(struct node *)malloc(1*sizeof(struct node));
-        		rear->ptr = temp;
-        		temp->info = argv[counter];
-        		temp->ptr = NULL;
-        		rear = temp;
-	   			}
-	   		queueCounter++;
-			counter++;
-		}
-			
-		//re-run while loop above, only looking for -a flag. After the while loop counter position is oriented, Take the argument after -a and tokenize(because comma makes it one argument), then populate *algorithms with the tokenized strings.
-		while(strcmp(argv[counter], "-a") != 1){
-			counter --;
-		}
+	}//end if fileReadName != NULL check.
+	for(int i = optind; i < argc; i++){
+		printf("File Detected: %s\n", argv[i]);
+        if((fprFromFile = fopen(argv[i], "r")) == NULL){
+                    if(errFileName != NULL){
+                        fprintf(fpe, "Error reading file %s.\n", argv[i]);
+                        printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
+                    }
+                    else{
+                        printf("Error reading file %s.\n", argv[i]);
+                    }
 
-		//oriented counter
-		counter++;
-		//tokenize strings from argument
-		while( tokenPtr != NULL){
-		tokenPtr = strtok(argv[counter], ",");
-		algorithms[i] = tokenPtr;
-		printf("Algos entered: %s", algorithms[i]);
-		i++;
-		}
-//    for(i = 0; i < 4; i++){//converts array of algorithms you made above to lowercase.
-   
-//    	*algorithms[i] = tolower(algorithms[i]);
-//    }                                                           //Ian: This won't work, tolower works on chars, not strings
+                }
+                else{
+                //populating queue with values read from file specified with -f flag as well as comamnd line args.
+                    if (rear == NULL) {
+                        rear = (struct node *)malloc(sizeof(struct node));
+                        rear->ptr = NULL;
+                        rear->info = argv[i];
+                        front = rear;
+                        }
+                        else {
+                        temp = (struct node *)malloc(sizeof(struct node));
+                        rear->ptr = temp;
+                        temp->info = argv[i];
+                        temp->ptr = NULL;
+                        rear = temp;
+                    }
+                queueCounter++;
+                }//end else statement
+	}
 
-    for(i = 0; i < 4; i++){                                    
-    	if((md5flag = strcmp(algorithms[i], "md5")) == 0){
+    for(i = 0; i < 4 && algorithms[i]!=NULL; i++){                                    
+    	if(strcmp(algorithms[i], "md5") == 0){
+            md5flag = 0;
 			MD5_Init(&md5);
     		}
-    	else if((sha1flag = strcmp(algorithms[i], "sha1")) == 0){    		
+    	else if(strcmp(algorithms[i], "sha1") == 0){ 
+            sha1flag = 0;   		
     		SHA1_Init(&sha);
     		}
 
-    	else if((sha256flag = strcmp(algorithms[i], "sha256")) == 0){
+    	else if(strcmp(algorithms[i], "sha256") == 0){
+            sha256flag = 0;
     		SHA256_Init(&sha256);
 			}
-		else if((sha512flag = strcmp(algorithms[i], "sha512")) == 0){
+		else if(strcmp(algorithms[i], "sha512") == 0){
+            sha512flag = 0;
     		SHA512_Init(&sha512);
     	}
     	
 		}//end for loop.
-*/
     
     //TODO: Finish implementing threading. You have written the function for the thread, you've created the thread below. Now finish it.
     for(j = 0; j <= numOfThreads; j++){
-    pthread_create(&identifier, NULL, &threadFunction, "I'm Mr Threadseeks, look at me!");
+    pthread_create(&identifier, NULL, &threadFunction, "I'm Mr Threadseeks, look at me!\n");
 	}
 	pthread_join(identifier, NULL);
     
 
 
     
-		printf("If you got to here, the program executed successfully. TINY RIIICK!");
+		printf("If you got to here, the program executed successfully. TINY RIIICK!\n");
 	}
