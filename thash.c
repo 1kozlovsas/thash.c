@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <pthread.h>
+#include <fcntl.h>
 void *threadFunction(void *arg);//function declaration
 int i;//used to keep track of arguments.
 int j;//used for nested for loop
@@ -27,21 +28,23 @@ unsigned char md5hash[MD5_DIGEST_LENGTH];
 unsigned char sha1hash[SHA_DIGEST_LENGTH];
 unsigned char sha256hash[SHA256_DIGEST_LENGTH];
 unsigned char sha512hash[SHA512_DIGEST_LENGTH];
-int errcheck;//variable used for error checking
-char *tokenPtr;//token pointer to temporarily hold tokenized hash specifications, to be placed into algorithms array
-char *algorithms[4];//array of strings entered after -m flag. //Ian: Should this not be the -a flag?
+/**Variable declarations-see comments after each variable to determine purpose. **/
+int errcheck;//variable used for error checking.
+char *tokenPtr;//token pointer to temporarily hold tokenized hash specifications, to be placed into algorithms array.
+char *algorithms[4];//array of strings entered after -a flag. //Ian: Should this not be the -a flag? <-Alex: yup there's no m-flag oops
 char *fileReadName = NULL;//Pointer to file to read from, specified by user with -f flag.
 char *errFileName = NULL;//Pointer to file to write errors to, specified by user with -e flag.
 char *fileWriteName = NULL;//Pointer to file to write stdout to, specified by user with -o flag.
-char *fileNamefromFileFlag = NULL;
 char buffer[1024];//buffer to hold each line of the file fgets obtains.
-int numOfThreads = 2;//Number of threads to complete, default is 2 but can be modified with -t flag.
+char dataBuffer[4096];//buffer to hold all data read from the files specified in buffer above to add to queue in order to hash.
+int numOfThreads = 2;//Number of threads to complete, default is 2 but can be modified with -t flag. TODO: Add error checking so it cannot be > 1.
 int queueCounter = 0;//counter to keep track of file names in queue.
 FILE *fpr;//pointer to open file specified in -f flag
 FILE *fprFromFile;//pointer to files listed in a specified file using the -f flag.
 FILE *fpw;//used to write to a file using the -o flag.
 FILE *fpe;//pointer to file used to print errors, specified using -e flag.
-pthread_t identifier;//thread identifier
+pthread_t identifier;//thread identifier.
+pthread_mutex_t queue_mutex;//mutex declaration in order to lock down resource access.(in our case, the queue)
 //defining a queue
 struct node
 {
@@ -109,7 +112,14 @@ void printHashes(FILE *fp){
 
 void *threadFunction(void *arg)
 {
+	//Implementing file locking mechanism f_lock to lock writing to a file to one function call at a time.
+	struct flock f_lock;
+ +					f_lock.l_type = F_WRLCK;
+ +					f_lock.l_whence = SEEK_SET;
+ +					f_lock.l_start = 0;
+ +					f_lock.l_len = 0;
 	//dequeing from the queue
+ 	pthread_mutex_lock(&queue_mutex);
 	front1 = front;
  
     if (front1 == NULL)
@@ -126,7 +136,10 @@ void *threadFunction(void *arg)
         {
             front1 = front1->ptr;
             if(fileWriteName != NULL){
+            	fcntl(fpw, F_SETLKW, &f_lock);
                 printHashes(fpw);
+                f_lock.l_type = F_UNLCK;
+ +				fcntl(fpw, F_SETLK, &f_lock);
             }
             else{
                 printHashes(stdout);
@@ -138,7 +151,10 @@ void *threadFunction(void *arg)
         else
         {
             if(fileWriteName != NULL){
+            	fcntl(fpw, F_SETLKW, &f_lock);
                 printHashes(fpw);
+                f_lock.l_type = F_UNLCK;
+ +				fcntl(fpw, F_SETLK, &f_lock);
             }
             else{
                 printHashes(stdout);
@@ -147,6 +163,7 @@ void *threadFunction(void *arg)
         free(front);
         front = NULL;
         rear = NULL;
+        pthread_mutex_unlock(&queue_mutex);
         }
     }
 	return arg;
@@ -158,7 +175,7 @@ int main(int argc, char *argv[]) {
 printf("Hi, I'm Mr Meseeks, look at me! I heard you want to hash some files. CAAAN DO! \n");
 
 
-opterr = 0;
+opterr = 0;//Alex: opterr wasn't declared
 while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 	opterr = 0;
 	printf("Value of errcheck is %c\n", errcheck);
@@ -232,15 +249,19 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 	   		 		if (rear == NULL) {
         				rear = (struct node *)malloc(sizeof(struct node));
         				rear->ptr = NULL;
-                        rear->info = (char *)malloc(strlen(buffer));
-        				strncpy(rear->info, buffer, strlen(buffer));
+        				while(fread(dataBuffer, 1, 4096, fprFromFile)!= NULL){//continue reading data from dataBuffer 
+                        rear->info = (char *)malloc(strlen(dataBuffer));
+        				strncpy(rear->info, buffer, strlen(dataBuffer));
+        				}//end while
         				front = rear;
-    					}
+    					}//end if
     		 			else {
         				temp = (struct node *)malloc(sizeof(struct node));
         				rear->ptr = temp;
-                        temp->info = (char *)malloc(strlen(buffer));
-        				strncpy(temp->info, buffer, strlen(buffer));
+        				while(fread(dataBuffer, 1, 4096, fprFromFile)!= NULL){//continue reading data from dataBuffer 
+                        temp->info = (char *)malloc(strlen(dataBuffer));
+        				strncpy(temp->info, buffer, strlen(dataBuffer));
+        				}
         				temp->ptr = NULL;
         				rear = temp;
 	   				}
