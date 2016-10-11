@@ -47,7 +47,7 @@ struct node
 {
     char *info;
     struct node *ptr;
-}*front = NULL,*rear=NULL,*temp,*front1;
+}*front = NULL,*rear=NULL,*temp;
 typedef struct node node;//defining node to point to struct node so I don't have to declare struct node each time I want to use it.
 
 //front = rear = NULL;//empty queue created
@@ -64,10 +64,10 @@ char * stringToLower(char *str, int n){ //Makes the first n chars of a string lo
     return (char *)out;
 }
 
-void printHashes(FILE *fp){
-    fprintf(fp, "%s\n" , front->info);
+void printHashes(FILE *fp, node *no){
+    fprintf(fp, "%s\n" , no->info);
     if(md5flag == 0){
-    MD5_Update(&md5, front->info, sizeof(node));    
+    MD5_Update(&md5, no->info, sizeof(node));    
     MD5_Final(md5hash, &md5);
         fprintf(fp, "MD5\n");
         for(j = 0; j < MD5_DIGEST_LENGTH; j++){
@@ -77,7 +77,7 @@ void printHashes(FILE *fp){
     }      
     if(sha1flag == 0)
     {
-    SHA1_Update(&sha, front->info, sizeof(node));   
+    SHA1_Update(&sha, no->info, sizeof(node));   
     SHA1_Final(sha1hash, &sha);
         fprintf(fp, "SHA1\n");
         for(j = 0; j < SHA_DIGEST_LENGTH; j++){
@@ -87,7 +87,7 @@ void printHashes(FILE *fp){
     }
     if(sha256flag == 0)
     {
-    SHA256_Update(&sha256, front->info, sizeof(node));  
+    SHA256_Update(&sha256, no->info, sizeof(node));  
     SHA256_Final(sha256hash, &sha256);
         fprintf(fp, "SHA256\n");
         for(j = 0; j < SHA256_DIGEST_LENGTH; j++){
@@ -97,7 +97,7 @@ void printHashes(FILE *fp){
     }
     if(sha512flag == 0)
     {
-    SHA512_Update(&sha512, front->info, sizeof(node));  
+    SHA512_Update(&sha512, no->info, sizeof(node));  
     SHA512_Final(sha512hash, &sha512);
         fprintf(fp, "SHA512\n");
         for(j = 0; j < SHA512_DIGEST_LENGTH; j++){
@@ -110,8 +110,9 @@ void printHashes(FILE *fp){
 void *threadFunction(void *arg)
 {
 	//dequeing from the queue
-	front1 = front;
- 
+	node *front1 = front; //front1 should really be a variable that's local to the thread, not global, otherwise every thread is going to use the same front1, which is baaaaaaaad.
+    front = front->ptr;  //Doing this ASAP after storing the value in front1 should help minimize race conditions. Really we need a semaphore long around these two lines
+    printf("Value of front1->info: %s\n value of front->info: %s\n",front1->info, front->info);
     if (front1 == NULL)
     {
     	if(errFileName != NULL){
@@ -122,32 +123,18 @@ void *threadFunction(void *arg)
         return arg;
     }
     else{
-        if (front1->ptr != NULL)
-        {
-            front1 = front1->ptr;
-            if(fileWriteName != NULL){
-                printHashes(fpw);
+
+          if(fileWriteName != NULL){
+                printHashes(fpw, front1);
             }
             else{
-                printHashes(stdout);
+                printHashes(stdout, front1);
             }
-            printf("Dequeued value: %s\n", front->info);
-            free(front);
-            front = front1;
-        }
-        else
-        {
-            if(fileWriteName != NULL){
-                printHashes(fpw);
+            printf("Dequeued value: %s\n", front1->info);
+            if (front1->ptr == NULL){
+                rear = NULL;
             }
-            else{
-                printHashes(stdout);
-            }
-        printf("Dequeued value: %s\n", front->info);
-        free(front);
-        front = NULL;
-        rear = NULL;
-        }
+            free(front1);
     }
 	return arg;
 }
@@ -301,7 +288,7 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 		}//end for loop.
     
     //TODO: Finish implementing threading. You have written the function for the thread, you've created the thread below. Now finish it.
-    for(j = 0; j <= numOfThreads; j++){
+    for(j = 0; j < numOfThreads; j++){
     pthread_create(&identifier, NULL, &threadFunction, "I'm Mr Threadseeks, look at me!\n");
 	}
 	pthread_join(identifier, NULL);
