@@ -114,10 +114,10 @@ void *threadFunction(void *arg)
 {
 	//Implementing file locking mechanism f_lock to lock writing to a file to one function call at a time.
 	struct flock f_lock;
- +					f_lock.l_type = F_WRLCK;
- +					f_lock.l_whence = SEEK_SET;
- +					f_lock.l_start = 0;
- +					f_lock.l_len = 0;
+    f_lock.l_type = F_WRLCK;
+ 	f_lock.l_whence = SEEK_SET;
+ 	f_lock.l_start = 0;
+ 	f_lock.l_len = 0;
 	//dequeing from the queue
  	pthread_mutex_lock(&queue_mutex);
 	front1 = front;
@@ -139,7 +139,7 @@ void *threadFunction(void *arg)
             	fcntl(fpw, F_SETLKW, &f_lock);
                 printHashes(fpw);
                 f_lock.l_type = F_UNLCK;
- +				fcntl(fpw, F_SETLK, &f_lock);
+ 				fcntl(fpw, F_SETLK, &f_lock);
             }
             else{
                 printHashes(stdout);
@@ -154,7 +154,7 @@ void *threadFunction(void *arg)
             	fcntl(fpw, F_SETLKW, &f_lock);
                 printHashes(fpw);
                 f_lock.l_type = F_UNLCK;
- +				fcntl(fpw, F_SETLK, &f_lock);
+ 				fcntl(fpw, F_SETLK, &f_lock);
             }
             else{
                 printHashes(stdout);
@@ -249,7 +249,7 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 	   		 		if (rear == NULL) {
         				rear = (struct node *)malloc(sizeof(struct node));
         				rear->ptr = NULL;
-        				while(fread(dataBuffer, 1, 4096, fprFromFile)!= NULL){//continue reading data from dataBuffer 
+        				while(fread(dataBuffer, 1, 4096, fprFromFile)!= 0){//continue reading data from dataBuffer 
                         rear->info = (char *)malloc(strlen(dataBuffer));
         				strncpy(rear->info, buffer, strlen(dataBuffer));
         				}//end while
@@ -258,7 +258,7 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
     		 			else {
         				temp = (struct node *)malloc(sizeof(struct node));
         				rear->ptr = temp;
-        				while(fread(dataBuffer, 1, 4096, fprFromFile)!= NULL){//continue reading data from dataBuffer 
+        				while(fread(dataBuffer, 1, 4096, fprFromFile)!= 0){//continue reading data from dataBuffer 
                         temp->info = (char *)malloc(strlen(dataBuffer));
         				strncpy(temp->info, buffer, strlen(dataBuffer));
         				}
