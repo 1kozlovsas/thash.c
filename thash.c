@@ -39,7 +39,10 @@ char buffer[1024];//buffer to hold each line of the file fgets obtains.
 char dataBuffer[4096];//buffer to hold all data read from the files specified in buffer above to add to queue in order to hash.
 int numOfThreads = 2;//Number of threads to complete, default is 2 but can be modified with -t flag. TODO: Add error checking so it cannot be > 1.
 int queueCounter = 0;//counter to keep track of file names in queue.
+<<<<<<< HEAD
 int numofBytes = 0;//number of bytes for hash algos to check
+=======
+>>>>>>> master
 FILE *fpr;//pointer to open file specified in -f flag
 FILE *fprFromFile;//pointer to files listed in a specified file using the -f flag.
 FILE *fpw;//used to write to a file using the -o flag.
@@ -84,8 +87,13 @@ void printHashes(FILE *fp){
 
     fprintf(fp, "%s\n" , front->info);
     if(md5flag == 0){
+<<<<<<< HEAD
     while((numofBytes = fread(dataBuffer, 1, 4096, fpToHashData))!= 0){//continue reading data from dataBuffer
     	MD5_Update(&md5, dataBuffer, numofBytes;
+=======
+    while(fread(dataBuffer, 1, 4096, fpToHashData)!= 0){//continue reading data from dataBuffer
+    	MD5_Update(&md5, dataBuffer, sizeof(dataBuffer));
+>>>>>>> master
     }//end while    
     MD5_Final(md5hash, &md5);
         fprintf(fp, "MD5\n");
@@ -96,7 +104,11 @@ void printHashes(FILE *fp){
     }      
     if(sha1flag == 0)
     {
+<<<<<<< HEAD
     	while((numofBytes = fread(dataBuffer, 1, 4096, fpToHashData))!= 0){//continue reading data from dataBuffer
+=======
+    	while(fread(dataBuffer, 1, 4096, fpToHashData)!= 0){//continue reading data from dataBuffer
+>>>>>>> master
     SHA1_Update(&sha, dataBuffer, sizeof(dataBuffer));
     }//end while   
     SHA1_Final(sha1hash, &sha);
@@ -108,7 +120,11 @@ void printHashes(FILE *fp){
     }
     if(sha256flag == 0)
     {
+<<<<<<< HEAD
     	while((numofBytes = fread(dataBuffer, 1, 4096, fpToHashData))!= 0){//continue reading data from dataBuffer
+=======
+    	while(fread(dataBuffer, 1, 4096, fpToHashData)!= 0){//continue reading data from dataBuffer
+>>>>>>> master
     SHA256_Update(&sha256, dataBuffer, sizeof(dataBuffer)); 
     }//end while 
     SHA256_Final(sha256hash, &sha256);
@@ -120,7 +136,11 @@ void printHashes(FILE *fp){
     }
     if(sha512flag == 0)
     {
+<<<<<<< HEAD
     	while((numofBytes = fread(dataBuffer, 1, 4096, fpToHashData))!= 0){//continue reading data from dataBuffer
+=======
+    	while(fread(dataBuffer, 1, 4096, fpToHashData)!= 0){//continue reading data from dataBuffer
+>>>>>>> master
     SHA512_Update(&sha512, dataBuffer, sizeof(dataBuffer));
     }//end while  
     SHA512_Final(sha512hash, &sha512);
