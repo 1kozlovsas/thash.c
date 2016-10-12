@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <getopt.h>
 void *threadFunction(void *arg);//function declaration
 int i;//used to keep track of arguments.
 int j;//used for nested for loop
@@ -174,10 +175,19 @@ void *threadFunction(void *arg)
 int main(int argc, char *argv[]) {
 printf("Hi, I'm Mr Meseeks, look at me! I heard you want to hash some files. CAAAN DO! \n");
 
-
-opterr = 0;//Alex: opterr wasn't declared
+static struct option long_options[] ={
+    {"algorithms", required_argument, 0, 'a'},
+    {"file", required_argument, 0, 'f'},
+    {"error", required_argument, 0, 'e'},           //This is how the long flags are associated with the short flags
+    {"output", required_argument, 0, 'o'},
+    {"threads", required_argument, 0, 't'},
+    {0,0,0,0}
+};
+int option_index = 0;
+//errcheck = getopt_long(argc, argv, "a:f:e:o:t", long_options, &option_index); //This is how to use getopt_long for --longinputs
+//opterr = 0; //Alex: opterr wasn't declared //Ian: Yeah, this was me screwing around with getopt trying to make the arguments actually show up in optarg, I don't think we need it anymore
 while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
-	opterr = 0;
+	//opterr = 0;
 	printf("Value of errcheck is %c\n", errcheck);
 	switch(errcheck){
 		case 'a':
