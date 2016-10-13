@@ -98,7 +98,7 @@ void printHashes(int fd){
     if(sha1flag == 0)
     {
     	while((numofBytes = fread(dataBuffer, 1, 4096, fpToHashData))!= 0){//continue reading data from dataBuffer
-    SHA1_Update(&sha, dataBuffer, sizeof(dataBuffer));
+    SHA1_Update(&sha, dataBuffer, numofBytes);
     }//end while   
     SHA1_Final(sha1hash, &sha);
         dprintf(fd, "SHA1\n");
@@ -110,7 +110,7 @@ void printHashes(int fd){
     if(sha256flag == 0)
     {
     	while((numofBytes = fread(dataBuffer, 1, 4096, fpToHashData))!= 0){//continue reading data from dataBuffer
-    SHA256_Update(&sha256, dataBuffer, sizeof(dataBuffer)); 
+    SHA256_Update(&sha256, dataBuffer, numofBytes); 
     }//end while 
     SHA256_Final(sha256hash, &sha256);
         dprintf(fd, "SHA256\n");
@@ -122,7 +122,7 @@ void printHashes(int fd){
     if(sha512flag == 0)
     {
     	while((numofBytes = fread(dataBuffer, 1, 4096, fpToHashData))!= 0){//continue reading data from dataBuffer
-    SHA512_Update(&sha512, dataBuffer, sizeof(dataBuffer));
+    SHA512_Update(&sha512, dataBuffer, numofBytes);
     }//end while  
     SHA512_Final(sha512hash, &sha512);
         dprintf(fd, "SHA512\n");
