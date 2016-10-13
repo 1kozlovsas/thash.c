@@ -71,8 +71,8 @@ char * stringToLower(char *str, int n){ //Makes the first n chars of a string lo
     return (char *)out;
 }
 
-void printHashes(FILE *fp){
-	if(fpToHashData = fopen(front->info, "r") ==NULL){
+void printHashes(int fd){
+	if((fpToHashData = fopen(front->info, "r")) == NULL){
 		if(errFileName != NULL){
 	   					fprintf(fpe, "Error reading file %s from file list.\n", front->info);
 	   					printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
@@ -83,17 +83,17 @@ void printHashes(FILE *fp){
 	   				}
 	}
 
-    fprintf(fp, "%s\n" , front->info);
+    dprintf(fd, "%s\n" , front->info);
     if(md5flag == 0){
     while((numofBytes = fread(dataBuffer, 1, 4096, fpToHashData))!= 0){//continue reading data from dataBuffer
-    	MD5_Update(&md5, dataBuffer, numofBytes;
+    	MD5_Update(&md5, dataBuffer, numofBytes);
     }//end while    
     MD5_Final(md5hash, &md5);
-        fprintf(fp, "MD5\n");
+        dprintf(fd, "MD5\n");
         for(j = 0; j < MD5_DIGEST_LENGTH; j++){
-            fprintf(fp, "%02x", md5hash[j]);
+            dprintf(fd, "%02x", md5hash[j]);
             }
-            fprintf(fp, "\n"); 
+            dprintf(fd, "\n"); 
     }      
     if(sha1flag == 0)
     {
@@ -101,11 +101,11 @@ void printHashes(FILE *fp){
     SHA1_Update(&sha, dataBuffer, sizeof(dataBuffer));
     }//end while   
     SHA1_Final(sha1hash, &sha);
-        fprintf(fp, "SHA1\n");
+        dprintf(fd, "SHA1\n");
         for(j = 0; j < SHA_DIGEST_LENGTH; j++){
-                fprintf(fp, "%02x", sha1hash[j]);
+                dprintf(fd, "%02x", sha1hash[j]);
         }
-        fprintf(fp, "\n");
+        dprintf(fd, "\n");
     }
     if(sha256flag == 0)
     {
@@ -113,11 +113,11 @@ void printHashes(FILE *fp){
     SHA256_Update(&sha256, dataBuffer, sizeof(dataBuffer)); 
     }//end while 
     SHA256_Final(sha256hash, &sha256);
-        fprintf(fp, "SHA256\n");
+        dprintf(fd, "SHA256\n");
         for(j = 0; j < SHA256_DIGEST_LENGTH; j++){
-            fprintf(fp, "%02x", sha256hash[j]);
+            dprintf(fd, "%02x", sha256hash[j]);
         }
-        fprintf(fp, "\n");
+        dprintf(fd, "\n");
     }
     if(sha512flag == 0)
     {
@@ -125,11 +125,11 @@ void printHashes(FILE *fp){
     SHA512_Update(&sha512, dataBuffer, sizeof(dataBuffer));
     }//end while  
     SHA512_Final(sha512hash, &sha512);
-        fprintf(fp, "SHA512\n");
+        dprintf(fd, "SHA512\n");
         for(j = 0; j < SHA512_DIGEST_LENGTH; j++){
-                fprintf(fp, "%02x", sha512hash[j]);
+                dprintf(fd, "%02x", sha512hash[j]);
         }
-        fprintf(fp, "\n");
+        dprintf(fd, "\n");
     }
 }
 
@@ -159,13 +159,13 @@ void *threadFunction(void *arg)
         {
             front1 = front1->ptr;
             if(fileWriteName != NULL){
-            	fcntl(fpw, F_SETLKW, &f_lock);
-                printHashes(fpw);
+            	fcntl(fd, F_SETLKW, &f_lock);
+                printHashes(fd);
                 f_lock.l_type = F_UNLCK;
- 				fcntl(fpw, F_SETLK, &f_lock);
+ 				fcntl(fd, F_SETLK, &f_lock);
             }
             else{
-                printHashes(stdout);
+                printHashes(1);
             }
             printf("Dequeued value: %s\n", front->info);
             free(front);
@@ -174,13 +174,13 @@ void *threadFunction(void *arg)
         else
         {
             if(fileWriteName != NULL){
-            	fcntl(fpw, F_SETLKW, &f_lock);
-                printHashes(fpw);
+            	fcntl(fd, F_SETLKW, &f_lock);
+                printHashes(fd);
                 f_lock.l_type = F_UNLCK;
- 				fcntl(fpw, F_SETLK, &f_lock);
+ 				fcntl(fd, F_SETLK, &f_lock);
             }
             else{
-                printHashes(stdout);
+                printHashes(1);
             }
         printf("Dequeued value: %s\n", front->info);
         free(front);
@@ -239,7 +239,7 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
       		break;
       	case 'o':
       		fileWriteName = optarg;
-      		if ( ( fpw = fopen(fileWriteName, "w" ) ) == NULL ) {
+      		if ( ( fd = open(fileWriteName, O_WRONLY | O_CREAT, 0744 ) ) < 0 ) {
       			printf( "File %s could not be opened\n", fileWriteName);
       			exit(EXIT_FAILURE);
       		}
