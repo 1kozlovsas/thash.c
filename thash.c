@@ -147,8 +147,9 @@ void *threadFunction(void *arg)
  	f_lock.l_len = 0;
 	//dequeing from the queue
     struct node *front1;
-
+    pthread_mutex_lock(&queue_mutex);
 	front1 = front;
+    pthread_mutex_unlock(&queue_mutex);
  
     if (front1 == NULL)
     {
@@ -172,7 +173,9 @@ void *threadFunction(void *arg)
 
   if (front1 == NULL)
   {
+
       if(errFileName != NULL){
+
               fprintf(fpe, "\n Queue empty.\n");
               printf("Queue empty. A record of when the queue was emptied can be found at the end of %s.\n", errFileName);
           }
@@ -181,13 +184,18 @@ void *threadFunction(void *arg)
       return arg;
   }
           if(fileWriteName != NULL){
-              fcntl(fd, F_SETLKW, &f_lock);
+              //f_lock.l_type = F_SETLKW;
+              //fcntl(fd, F_SETLKW, &f_lock);
+              pthread_mutex_lock(&queue_mutex);
               printHashes(fd, front1);
-              f_lock.l_type = F_UNLCK;
-               fcntl(fd, F_SETLK, &f_lock);
+              //f_lock.l_type = F_UNLCK;
+               //fcntl(fd, F_SETLK, &f_lock);
+              pthread_mutex_unlock(&queue_mutex);
           }
           else{
+            pthread_mutex_lock(&queue_mutex);    
               printHashes(fd, front1); //This has to be modified to take front1!!
+            pthread_mutex_unlock(&queue_mutex);
           }
           printf("Dequeued value: %s\n", front1->info);
           free(front1);
@@ -357,9 +365,10 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 		}//end for loop.
     
     //TODO: Finish implementing threading. You have written the function for the thread, you've created the thread below. Now finish it.
-    for(j = 0; j <= numOfThreads; j++){
+    printf("Number of threads is %d ", numOfThreads);
+    for(j = 0; j < numOfThreads; j++){
     pthread_create(&identifier, NULL, &threadFunction, "I'm Mr Threadseeks, look at me!\n");
-	sleep(1);
+	//sleep(1);
     }
 
 	pthread_join(identifier, NULL);
