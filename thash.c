@@ -281,7 +281,7 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 	   				else{
 	   					printf("Error reading file %s from file list.\n", buffer);
                         printf("String length is: %lu\n", strlen(buffer));
-                        exit(EXIT_FAILURE);
+                        //exit(EXIT_FAILURE);
 	   				}
 
 	   			}
