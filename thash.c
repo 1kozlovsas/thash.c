@@ -54,7 +54,7 @@ struct node
 {
     char *info;
     struct node *ptr;
-}*front = NULL,*rear=NULL,*temp,*front1;
+}*front = NULL,*rear=NULL,*temp;//*front1;
 typedef struct node node;//defining node to point to struct node so I don't have to declare struct node each time I want to use it.
 
 //front = rear = NULL;//empty queue created
@@ -71,19 +71,19 @@ char * stringToLower(char *str, int n){ //Makes the first n chars of a string lo
     return (char *)out;
 }
 
-void printHashes(int fd){
-	if((fpToHashData = fopen(front->info, "r")) == NULL){
+void printHashes(int fd, struct node *front1){
+	if((fpToHashData = fopen(front1->info, "r")) == NULL){
 		if(errFileName != NULL){
-	   					fprintf(fpe, "Error reading file %s from file list.\n", front->info);
+	   					fprintf(fpe, "Error reading file %s from file list.\n", front1->info);
 	   					printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
 	   				}
 	   				else{
-	   					printf("Error reading file %s from file list.\n", front->info);
-                        printf("String length is: %lu\n", strlen(front->info));
+	   					printf("Error reading file %s from file list.\n", front1->info);
+                        printf("String length is: %lu\n", strlen(front1->info));
 	   				}
 	}
 
-    dprintf(fd, "%s\n" , front->info);
+    dprintf(fd, "%s\n" , front1->info);
     if(md5flag == 0){
     while((numofBytes = fread(dataBuffer, 1, 4096, fpToHashData))!= 0){//continue reading data from dataBuffer
     	MD5_Update(&md5, dataBuffer, numofBytes);
@@ -146,7 +146,7 @@ void *threadFunction(void *arg)
  	f_lock.l_start = 0;
  	f_lock.l_len = 0;
 	//dequeing from the queue
- 	pthread_mutex_lock(&queue_mutex);
+    struct node *front1;
 
 	front1 = front;
  
@@ -154,48 +154,44 @@ void *threadFunction(void *arg)
     {
     	if(errFileName != NULL){
 	   		fprintf(fpe, "\n Queue empty.\n");
-	   		printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
+	   		printf("Queue empty. A record of when the queue was emptied can be found at the end of %s.\n", errFileName);
 	   	}
-        printf("Queue empty.\n");
-        exit(EXIT_SUCCESS);;
+        printf("Queue empty, program terminating successfully. TINY RIIICK!\n");
+        //exit(EXIT_SUCCESS);;
         return arg;
     }
     else{
-       while(front1 != NULL && front != NULL){ 
-        if (front1->ptr != NULL)
-        {
-            front1 = front1->ptr;
-            if(fileWriteName != NULL){
-            	fcntl(fd, F_SETLKW, &f_lock);
-                printHashes(fd);
-                f_lock.l_type = F_UNLCK;
- 				fcntl(fd, F_SETLK, &f_lock);
-            }
-            else{
-                printHashes(1);
-            }
-            printf("Dequeued value: %s\n", front->info);
-            free(front);
-            front = front1;
-        }
-        else
-        {
-            if(fileWriteName != NULL){
-            	fcntl(fd, F_SETLKW, &f_lock);
-                printHashes(fd);
-                f_lock.l_type = F_UNLCK;
- 				fcntl(fd, F_SETLK, &f_lock);
-            }
-            else{
-                printHashes(1);
-            }
-        printf("Dequeued value: %s\n", front->info);
-        free(front);
-        front = NULL;
-        rear = NULL;
-        pthread_mutex_unlock(&queue_mutex);
-        }
-    }//end while
+       while(1){
+        //Locking down front1 variable when it is being modified-no need to lock when it is being accessed
+          pthread_mutex_lock(&queue_mutex);
+          front1 = front;
+          if(front!=NULL){
+          front = front->ptr;
+           }
+          pthread_mutex_unlock(&queue_mutex);
+
+  if (front1 == NULL)
+  {
+      if(errFileName != NULL){
+              fprintf(fpe, "\n Queue empty.\n");
+              printf("Queue empty. A record of when the queue was emptied can be found at the end of %s.\n", errFileName);
+          }
+      printf("Queue empty, program terminating successfully. TINY RIIICK!\n");
+      //exit(EXIT_SUCCESS);;
+      return arg;
+  }
+          if(fileWriteName != NULL){
+              fcntl(fd, F_SETLKW, &f_lock);
+              printHashes(fd, front1);
+              f_lock.l_type = F_UNLCK;
+               fcntl(fd, F_SETLK, &f_lock);
+          }
+          else{
+              printHashes(fd, front1); //This has to be modified to take front1!!
+          }
+          printf("Dequeued value: %s\n", front1->info);
+          free(front1);
+}//end while
     }
 	return arg;
 }
@@ -312,7 +308,7 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 		printf("File Detected: %s\n", argv[i]);
         if((fprFromFile = fopen(argv[i], "r")) == NULL){//Alex: fprFromFile is meant to be a file pointer to files inside file spcified in -f flag.
                     if(errFileName != NULL){
-                        fprintf(fpe, "Error reading file %s.\n", argv[i]);
+                        fprintf(fpe, "Error reading file %s : File does not exist.\n", argv[i]);
                         printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
                     }
                     else{
@@ -363,12 +359,10 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
     //TODO: Finish implementing threading. You have written the function for the thread, you've created the thread below. Now finish it.
     for(j = 0; j <= numOfThreads; j++){
     pthread_create(&identifier, NULL, &threadFunction, "I'm Mr Threadseeks, look at me!\n");
-	}
+	sleep(1);
+    }
+
 	pthread_join(identifier, NULL);
     
-
-
-    
-		printf("If you got to here, the program executed successfully. TINY RIIICK!\n");
 	}
 
