@@ -147,18 +147,21 @@ void *threadFunction(void *arg)
  	f_lock.l_len = 0;
 	//dequeing from the queue
  	pthread_mutex_lock(&queue_mutex);
+
 	front1 = front;
  
     if (front1 == NULL)
     {
     	if(errFileName != NULL){
-	   		fprintf(fpe, "\n Error: Trying to display elements from empty queue\n");
+	   		fprintf(fpe, "\n Queue empty.\n");
 	   		printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
 	   	}
-        printf("Error: You're trying to display elements from an empty queue. That would be Rick-Diculous!\n");
+        printf("Queue empty.\n");
+        exit(EXIT_SUCCESS);;
         return arg;
     }
     else{
+       while(front1 != NULL && front != NULL){ 
         if (front1->ptr != NULL)
         {
             front1 = front1->ptr;
@@ -192,6 +195,7 @@ void *threadFunction(void *arg)
         rear = NULL;
         pthread_mutex_unlock(&queue_mutex);
         }
+    }//end while
     }
 	return arg;
 }
