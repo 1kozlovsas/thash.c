@@ -57,7 +57,7 @@ struct node
 }*front = NULL,*rear=NULL,*temp;//*front1;
 typedef struct node node;//defining node to point to struct node so I don't have to declare struct node each time I want to use it.
 
-//front = rear = NULL;//empty queue created
+
 
 char * stringToLower(char *str, int n){ //Makes the first n chars of a string lowercase
     if(str == NULL)
@@ -139,16 +139,13 @@ void printHashes(int fd, struct node *front1){
 
 void *threadFunction(void *arg)
 {
-	//Implementing file locking mechanism f_lock to lock writing to a file to one function call at a time.
-	struct flock f_lock;
-    f_lock.l_type = F_WRLCK;
- 	f_lock.l_whence = SEEK_SET;
- 	f_lock.l_start = 0;
- 	f_lock.l_len = 0;
+	pthread_mutex_lock(&queue_mutex);//locking down thread 
+
 	//dequeing from the queue
     struct node *front1;
-
+    
 	front1 = front;
+    
  
     if (front1 == NULL)
     {
@@ -157,41 +154,37 @@ void *threadFunction(void *arg)
 	   		printf("Queue empty. A record of when the queue was emptied can be found at the end of %s.\n", errFileName);
 	   	}
         printf("Queue empty, program terminating successfully. TINY RIIICK!\n");
-        //exit(EXIT_SUCCESS);;
         return arg;
     }
     else{
        while(1){
         //Locking down front1 variable when it is being modified-no need to lock when it is being accessed
-          pthread_mutex_lock(&queue_mutex);
           front1 = front;
           if(front!=NULL){
           front = front->ptr;
            }
-          pthread_mutex_unlock(&queue_mutex);
 
   if (front1 == NULL)
   {
+
       if(errFileName != NULL){
+
               fprintf(fpe, "\n Queue empty.\n");
               printf("Queue empty. A record of when the queue was emptied can be found at the end of %s.\n", errFileName);
           }
       printf("Queue empty, program terminating successfully. TINY RIIICK!\n");
-      //exit(EXIT_SUCCESS);;
       return arg;
   }
           if(fileWriteName != NULL){
-              fcntl(fd, F_SETLKW, &f_lock);
               printHashes(fd, front1);
-              f_lock.l_type = F_UNLCK;
-               fcntl(fd, F_SETLK, &f_lock);
           }
-          else{
-              printHashes(fd, front1); //This has to be modified to take front1!!
+          else{    
+              printHashes(fd, front1); 
           }
           printf("Dequeued value: %s\n", front1->info);
           free(front1);
 }//end while
+pthread_mutex_unlock(&queue_mutex);
     }
 	return arg;
 }
@@ -200,18 +193,19 @@ void *threadFunction(void *arg)
 
 int main(int argc, char *argv[]) {
 printf("Hi, I'm Mr Meseeks, look at me! I heard you want to hash some files. CAAAN DO! \n");
-static struct option long_options[] ={
+//Assigning longer-format strings to character specifiers using getopt.
+struct option long_options[] ={
      {"algorithms", required_argument, 0, 'a'},
      {"file", required_argument, 0, 'f'},
-     {"error", required_argument, 0, 'e'},           //This is how the long flags are associated with the short flags
+     {"error", required_argument, 0, 'e'},
      {"output", required_argument, 0, 'o'},
      {"threads", required_argument, 0, 't'},
      {0,0,0,0}
  };
- int option_index = 0;
+ int option_index=0;
 
 
-while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
+while((errcheck = getopt_long(argc, argv, "a:f:e:o:t:", long_options, &option_index)) != -1) {
 	opterr = 0;
 	printf("Value of errcheck is %c\n", errcheck);
 	switch(errcheck){
@@ -277,7 +271,6 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 	   				else{
 	   					printf("Error reading file %s from file list.\n", buffer);
                         printf("String length is: %lu\n", strlen(buffer));
-                        //exit(EXIT_FAILURE);
 	   				}
 
 	   			}
@@ -306,7 +299,7 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
 	}//end if fileReadName != NULL check.
 	for(int i = optind; i < argc; i++){
 		printf("File Detected: %s\n", argv[i]);
-        if((fprFromFile = fopen(argv[i], "r")) == NULL){//Alex: fprFromFile is meant to be a file pointer to files inside file spcified in -f flag.
+        if((fprFromFile = fopen(argv[i], "r")) == NULL){
                     if(errFileName != NULL){
                         fprintf(fpe, "Error reading file %s : File does not exist.\n", argv[i]);
                         printf("Something has failed, way to go, JERRY. See error file %s for more details.\n", errFileName);
@@ -356,13 +349,13 @@ while((errcheck = getopt(argc, argv, "a:f:e:o:t:")) != -1) {
     	
 		}//end for loop.
     
-    //TODO: Finish implementing threading. You have written the function for the thread, you've created the thread below. Now finish it.
-    for(j = 0; j <= numOfThreads; j++){
-    pthread_create(&identifier, NULL, &threadFunction, "I'm Mr Threadseeks, look at me!\n");
-	sleep(1);
+    
+    printf("Number of threads is %d ", numOfThreads);
+    for(j = 0; j < numOfThreads; j++){
+    pthread_create(&identifier, NULL, &threadFunction, "I'm Mr Threadseeks, look at me!");
+	
     }
 
 	pthread_join(identifier, NULL);
     
 	}
-
